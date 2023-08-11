@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hot-Air-Balloon</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="start-menu">
+        <h1>Welcome to the Balloon Simulation!</h1>
+        
+        <button id="start-button">Start Simulation</button>
+        
+        <label for="">Balloon Radius</label>
+        <input type="number" min="4" max="10" value="4" id="radius"></input>
+        
+        <label for="">Payload Mass</label>
+        <input type="number" min="0" max="100" value="50" id="mass"></input>
+    </div>
+    
+    <canvas class="webgl"></canvas>
+    
+    <script type="module" src="./script.js"></script>
+</body>
+</html>

@@ -16,11 +16,16 @@
         <input type="number" min="4" max="10" value="4" id="radius"></input>
         
         <label for="">Payload Mass</label>
-        <input type="number" min="0" max="100" value="50" id="mass"></input>
+        <input type="number" min="0" max="1000" value="1000" id="mass"></input>
+
+        <label for="">Fuel</label>
+        <input type="number" min="10" max="300" value="1000" id="initFuel"></input>
     </div>
     
     <canvas class="webgl"></canvas>
-    
+
+    <div id="variablesList" style="width: 180px;color: gainsboro; padding: 10px;background-color: rgb(31,41,55); position: fixed; bottom: 0;">Variables List:</div>
+
     <script type="module" src="./script.js"></script>
 </body>
 </html>

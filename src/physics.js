@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 
 // Define constants
-const G0 =  9.80665,  // Gravitational constant
-      RE =  6_371_000  ,   // Radius of the Earth m
-      T0 = 25,    // Standard temperature
-      P0 = 1.01325,   // Standard pressure
-      R = 287.058,    // Gas constant
-      L = -6.5/1000 ,    // change by 6.5 every 1000 m
+const G0 =  9.80665,            // Gravitational constant
+      RE =  6_371_000  ,        // Radius of the Earth m
+      T0 = 25,                  // Standard temperature
+      P0 = 1.01325,             // Standard pressure
+      R = 287.058,              // Gas constant
+      L = -6.5/1000 ,       // change by 6.5 every 1000 m
       MATRIX = generateWindCurrents();
 
 function generateWindCurrents() {
@@ -29,10 +29,9 @@ function generateWindCurrents() {
 
 class Physics{
 
-    constructor(model, mass, radius) {
-        this.mass = mass
-        this.radius = radius
-        this.balloon_temp = 25
+    constructor(model) {
+        this.mass = 1000
+        this.radius = 5
         this.cd = 0.47
         this.model = model
         
@@ -40,11 +39,6 @@ class Physics{
         this.acc = new THREE.Vector3(0,0,0);
         this.netForce = new THREE.Vector3(0,0,0);
     }
-
-    
-    // applyForce(force){
-    //     this.netForce.add(force)
-    // }
 
     weight(){   
         //gravity
@@ -65,7 +59,6 @@ class Physics{
                     break
             }
         }
-
         if(!windCurrent) return new THREE.Vector3(0,0,0)
         
         let b1 = Math.cos(windCurrent.Xangle)
@@ -75,6 +68,7 @@ class Physics{
         let wind = 
             0.5 * this.cd * this.calc_air_rho(this.model.position.y) * Math.PI * Math.pow(this.radius, 2) * (windCurrent.windSpeed,2)
             
+        // let windForce = new THREE.Vector3(wind*b1, wind*b2, wind*b3)
         let windForce = new THREE.Vector3(wind*b1, wind*b2, wind*b3)
         
         return windForce
@@ -97,6 +91,7 @@ class Physics{
         if(this.model.position.y <= 2 ){
             this.model.position.setY(2)
             if(this.vel.y<0) this.vel.setY(0)
+            if(this.acc.y<0) this.acc.setY(0)
         }
     }
     
@@ -107,23 +102,23 @@ class Physics{
         // var rho_balloon = this.calc_balloon_rho() 
         
         var v = this.calc_balloon_volume(variables.radius)
-        
+
         let g = this.calc_gravity(this.model.position.y)
         
-        var air_temp = this.calc_tempereture(this.model.position.y)
+        console.log(g)
+        //var air_temp = this.calc_tempereture(this.model.position.y)
         
         let B = 
-        rho_air * T0 * v * g * ( ( 1 / this.calc_tempereture(this.model.position.y) ) - ( 1 / this.balloon_temp ) );
-        
-        // console.log('temp:' + Math.trunc(B), 'altitude:' + Math.trunc(this.model.position.y))
+        rho_air * T0 * v * g 
+        * ( ( 1 / this.calc_tempereture(this.model.position.y) ) - ( 1 / variables.inner_temperature ) );
         
         let buoyancyForce = new THREE.Vector3(0,B,0)
-        
+
         return buoyancyForce
     }
     
     update(dt){
-        //a=f/m
+        // acceleration = force / mass
         this.acc.add(this.netForce.clone().divideScalar(this.mass))
         
         //update the velocity based on the acceleration [v = v + (a*dt)]
@@ -134,13 +129,15 @@ class Physics{
         
         this.collision()
     }
-    
+
     execute(dt, variables, model){
         this.model = model
+        this.mass = +variables.mass + variables.fuel*0.583
+        this.radius = variables.radius
         this.netForce.multiplyScalar(0)
         this.acc.multiplyScalar(0)
         
-        this.change_balloon_temp(variables.burner, dt)
+        this.change_balloon_temp(variables, dt)
         
         this.netForce.add(this.wind())
         this.netForce.add(this.weight()) 
@@ -173,10 +170,13 @@ class Physics{
         return T0 + (L * height); // temperature at height  
     }
 
-    change_balloon_temp(burner, dt){
-        if( this.balloon_temp > 140 ) window.alert('balloon exploded!')
-        if( burner )  this.balloon_temp += dt
-        if( this.balloon_temp > 20 ) this.balloon_temp -= 0.135*dt
+    change_balloon_temp(variables, dt){
+        if( variables.inner_temperature > 140 ) window.alert('balloon exploded!')
+        if( variables.burner && variables.fuel>0 ){
+            variables.inner_temperature += dt
+            variables.fuel -= 0.511
+        }  
+        if( variables.inner_temperature > 25 ) variables.inner_temperature -= 0.135*dt
     }
     
     calc_air_rho(height){

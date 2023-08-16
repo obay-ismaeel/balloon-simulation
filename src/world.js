@@ -111,14 +111,14 @@ class World{
                 tree[1] = gltf.scene.clone()
                 
                 tree[0].position.set(300, 0, 30000)
-                tree[0].scale.set(0.2, 0.2, 0.2)
+                tree[0].scale.set(0.1, 0.1, 0.1)
                 tree[0].traverse( (node) => {
                     if(node.isMesh)
                         node.castShadow = true
                 })
 
                 tree[1].position.set(-300, 0, 30000)
-                tree[1].scale.set(0.1, 0.1, 0.1)
+                tree[1].scale.set(0.02, 0.02, 0.02)
                 tree[1].traverse( (node) => {
                     if(node.isMesh)
                         node.castShadow = true

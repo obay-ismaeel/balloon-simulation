@@ -10,15 +10,15 @@ const G0 =  9.80665,            // Gravitational constant
       MATRIX = generateWindCurrents();
 
 function generateWindCurrents() {
-    let N = 10, height = 100, Matrix = [];
+    let N = 10, height = 5, Matrix = [];
 
     for(let i = 0 ; i < N ; i++){    
         let windCurrent = {
             minHeight : height,
-            maxHeight : height + Math.ceil( 500 + Math.random() * 500 ), 
-            windSpeed : Math.ceil( Math.random() * 50 ), //m/s
+            maxHeight : height + Math.ceil( 50 + Math.random() * 450 ), 
+            windSpeed : Math.ceil( Math.random() * 25 ), //m/s
             Xangle :  Math.random() * 2 * Math.PI,
-            Yangle :  Math.random() * 2 * Math.PI,
+            Yangle :  Math.PI/2, //Math.random() * 2 * Math.PI
             Zangle :  Math.random() * 2 * Math.PI,
         }
         height = windCurrent.maxHeight;
@@ -32,6 +32,8 @@ class Physics{
     constructor(model) {
         this.mass = 1000
         this.radius = 5
+
+        // drag coefficient related to the shape of the balloon
         this.cd = 0.47
         this.model = model
         
@@ -42,7 +44,7 @@ class Physics{
 
     weight(){   
         //gravity
-        let g = new THREE.Vector3(0, -this.calc_gravity(this.model.position.y) ,0 )
+        let g = new THREE.Vector3(0, - this.calc_gravity(this.model.position.y) ,0 )
         
         //w=m*g
         let w = g.clone().multiplyScalar(this.mass)
@@ -65,8 +67,11 @@ class Physics{
         let b2 = Math.cos(windCurrent.Yangle)
         let b3 = Math.cos(windCurrent.Zangle)
 
-        let wind = 
-            0.5 * this.cd * this.calc_air_rho(this.model.position.y) * Math.PI * Math.pow(this.radius, 2) * (windCurrent.windSpeed,2)
+        let wind = 0.5 
+                * this.cd 
+                * this.calc_air_rho(this.model.position.y) 
+                * Math.PI * Math.pow(this.radius, 2) 
+                * Math.pow(windCurrent.windSpeed,2)
             
         // let windForce = new THREE.Vector3(wind*b1, wind*b2, wind*b3)
         let windForce = new THREE.Vector3(wind*b1, wind*b2, wind*b3)
@@ -75,8 +80,10 @@ class Physics{
     }
         
     drag(variables){
-        let drag = 
-        0.5 * this.cd * this.calc_air_rho(this.model.position.y) * Math.PI * Math.pow(variables.radius, 2)
+        let drag = 0.5 
+            * this.cd 
+            * this.calc_air_rho(this.model.position.y) 
+            *  Math.PI * Math.pow(variables.radius, 2)
         
         let xdrag = drag * Math.pow(this.vel.x, 2) * - Math.sign(this.vel.x)
         let ydrag = drag * Math.pow(this.vel.y, 2) * - Math.sign(this.vel.y)
@@ -97,19 +104,18 @@ class Physics{
     
     buoyancy(variables){
         
-        var rho_air = this.calc_air_rho(this.model.position.y)
+        var rho_air = this.calc_air_rho(this.model.position.y)  
         
         // var rho_balloon = this.calc_balloon_rho() 
         
-        var v = this.calc_balloon_volume(variables.radius)
+        var v = this.calc_balloon_volume(variables.radius) //Balloon Volume
 
-        let g = this.calc_gravity(this.model.position.y)
+        let g = this.calc_gravity(this.model.position.y)    //gravity
         
-        console.log(g)
-        //var air_temp = this.calc_tempereture(this.model.position.y)
-        
-        let B = 
-        rho_air * T0 * v * g 
+        let B = rho_air 
+        * T0 
+        * v 
+        * g 
         * ( ( 1 / this.calc_tempereture(this.model.position.y) ) - ( 1 / variables.inner_temperature ) );
         
         let buoyancyForce = new THREE.Vector3(0,B,0)
@@ -131,9 +137,11 @@ class Physics{
     }
 
     execute(dt, variables, model){
+        
         this.model = model
         this.mass = +variables.mass + variables.fuel*0.583
         this.radius = variables.radius
+
         this.netForce.multiplyScalar(0)
         this.acc.multiplyScalar(0)
         
@@ -141,8 +149,9 @@ class Physics{
         
         this.netForce.add(this.wind())
         this.netForce.add(this.weight()) 
-        this.netForce.add(this.drag(variables))
         this.netForce.add(this.buoyancy(variables))
+        this.netForce.add(this.drag(variables))
+        
         this.update(dt)
     }
     
@@ -171,11 +180,15 @@ class Physics{
     }
 
     change_balloon_temp(variables, dt){
+        //temp limit
         if( variables.inner_temperature > 140 ) window.alert('balloon exploded!')
+        
         if( variables.burner && variables.fuel>0 ){
             variables.inner_temperature += dt
             variables.fuel -= 0.511
         }  
+        
+        //تخامد
         if( variables.inner_temperature > 25 ) variables.inner_temperature -= 0.135*dt
     }
     
